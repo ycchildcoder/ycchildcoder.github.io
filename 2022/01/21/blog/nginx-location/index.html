@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="一、概述nginx官方文档给出location语法如下： 1location [&#x3D;|~|~*|^~] uri &amp;#123; … &amp;#125;  其中，方括号中的四种标识符是可选项，用来改变请求字符串和uri的匹配方式。uri是待匹配的请求字符串，可以是不包含正则的字符串，这种模式被称为“标准的uri”；也可以包含正则，这种模式被称为”正则uri”，如下： 1location ~ .*\.(php|">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nginx_location">
+<meta property="og:url" content="http://example.com/2022/01/21/blog/nginx-location/index.html">
+<meta property="og:site_name" content="ycchildcoder">
+<meta property="og:description" content="一、概述nginx官方文档给出location语法如下： 1location [&#x3D;|~|~*|^~] uri &amp;#123; … &amp;#125;  其中，方括号中的四种标识符是可选项，用来改变请求字符串和uri的匹配方式。uri是待匹配的请求字符串，可以是不包含正则的字符串，这种模式被称为“标准的uri”；也可以包含正则，这种模式被称为”正则uri”，如下： 1location ~ .*\.(php|">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-01-21T09:19:54.000Z">
+<meta property="article:modified_time" content="2022-01-24T02:35:43.696Z">
+<meta property="article:author" content="ycchildcoder">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2022/01/21/blog/nginx-location/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>nginx_location | ycchildcoder</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">ycchildcoder</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/21/blog/nginx-location/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ycchildcoder">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ycchildcoder">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          nginx_location
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-01-21 17:19:54" itemprop="dateCreated datePublished" datetime="2022-01-21T17:19:54+08:00">2022-01-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-01-24 10:35:43" itemprop="dateModified" datetime="2022-01-24T10:35:43+08:00">2022-01-24</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h4><p>nginx官方文档给出location语法如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> [=|~|~*|^~] uri &#123; … &#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，方括号中的四种标识符是可选项，用来改变请求字符串和uri的匹配方式。uri是待匹配的请求字符串，可以是不包含正则的字符串，这种模式被称为“标准的uri”；也可以包含正则，这种模式被称为”正则uri”，如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~ .*\.(php|php5)?$</span> &#123;``&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="二、四种可选的标识符"><a href="#二、四种可选的标识符" class="headerlink" title="二、四种可选的标识符"></a>二、四种可选的标识符</h4><table>
+<thead>
+<tr>
+<th><strong>标识符</strong></th>
+<th><strong>描述</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>=</td>
+<td><strong>精确匹配</strong>；用于标准uri前，要求请求字符串和uri严格匹配。如果匹配成功，就停止匹配，立即执行该location里面的请求。</td>
+</tr>
+<tr>
+<td>~</td>
+<td><strong>正则匹配</strong>；用于正则uri前，表示uri里面包含正则，并且区分大小写。</td>
+</tr>
+<tr>
+<td>~*</td>
+<td><strong>正则匹配</strong>；用于正则uri前，表示uri里面包含正则，不区分大小写。</td>
+</tr>
+<tr>
+<td>^~</td>
+<td><strong>非正则匹配</strong>；用于标准uri前，nginx服务器匹配到前缀最多的uri后就结束，该模式匹配成功后，不会使用正则匹配。</td>
+</tr>
+<tr>
+<td>无</td>
+<td><strong>普通匹配（最长字符匹配）</strong>；与location顺序无关，是按照匹配的长短来取匹配结果。若完全匹配，就停止匹配。</td>
+</tr>
+</tbody></table>
+<p><strong>备注</strong>：</p>
+<p>1、如果uri里面包含正则表达式，就必须使用<del>或</del>*标识符；</p>
+<p>2、针对<del>和</del>*匹配标识符，可以在前面加上!来取反，如下：</p>
+<p>!~ 表示正则不匹配，区分大小写。</p>
+<p>!~* 表示正则不匹配，不区分大小写。</p>
+<p><strong>2.1 “=”精准匹配案例</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span>  = /login &#123;</span><br><span class="line">  <span class="comment"># 精确匹配 /login ，匹配成功后，立即结束</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2.2 “~”区分大小写正则匹配案例</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~ /images/</span> &#123;</span><br><span class="line">  <span class="comment">#正则匹配，区分大小写，匹配成功后，立即结束</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2.3 “~*”不区分大小写正则匹配案例</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~* /images/</span> &#123;</span><br><span class="line">  <span class="comment">#正则匹配，不区分大小写，匹配成功后，立即结束</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2.4 “^~” 不进行正则匹配的标准匹配</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span><span class="regexp"> ^~</span> /images/ &#123;</span><br><span class="line">  <span class="comment"># 匹配任何以 /images/ 开头的地址，匹配符合以后，停止往下搜索正则，采用这一条。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>2.5 普通匹配（最长字符匹配）</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span>  /blog/ &#123;</span><br><span class="line">  <span class="comment"># 与location顺序无关</span></span><br><span class="line">  <span class="comment"># 若完全匹配成功，就不在继续匹配，否则还会进行正则匹配</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="三、location匹配顺序"><a href="#三、location匹配顺序" class="headerlink" title="三、location匹配顺序"></a>三、location匹配顺序</h4><p>在没有标识符的请求下，匹配规则如下：</p>
+<p>1、nginx服务器首先在server块的多个location块中搜索是否有标准的uri和请求字符串匹配。如果有多个标准uri可以匹配，就匹配其中匹配度最高的一个location。</p>
+<p>2、然后，nginx在使用location块中，正则uri和请求字符串，进行匹配。如果正则匹配成功，则结束匹配，并使用这个location处理请求；如果正则匹配失败，则使用标准uri中，匹配度最高的location。</p>
+<p><strong>备注：</strong></p>
+<p>1、如果有精确匹配，会先进行精确匹配，匹配成功，立刻返回结果。</p>
+<p>2、<strong>普通匹配与顺序无关，因为按照匹配的长短来取</strong>匹配结果。</p>
+<p>3、<em><strong>正则匹配与顺序有关</strong></em>，因为是从上往下匹配。(首先匹配，就结束解析过程)</p>
+<p>4、在location中，有一种统配的location，所有的请求，都可以匹配，如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span>  / &#123;</span><br><span class="line">  <span class="comment"># 因为所有的地址都以 / 开头，所以这条规则将匹配到所有请求</span></span><br><span class="line">  <span class="comment"># 但是正则和最长字符串会优先匹配</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><em><strong>结合标识符，匹配顺序如下：</strong></em></p>
+<p><strong><em>(location =) &gt; (location 完整路径) &gt; (location ^~ 路径) &gt; (location <del>,</del></em> 正则顺序) &gt; (location 部分起始路径) &gt; (location /)</strong>*</p>
+<p><em><strong>即</strong></em></p>
+<p><strong>（精确匹配）&gt; (最长字符串匹配，但完全匹配) &gt;（非正则匹配）&gt;（正则匹配）&gt;（最长字符串匹配，不完全匹配）&gt;（location通配）</strong></p>
+<h4 id="五、案例"><a href="#五、案例" class="headerlink" title="五、案例"></a>五、案例</h4><p>假设，现有如下一些规则：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> = / &#123;  </span><br><span class="line">   //精确匹配/ ，主机名后面不能带任何字符串</span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则A&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> = /login &#123;</span><br><span class="line">  //精确匹配 /<span class="attribute">login</span> 开头的地址，匹配符合以后，不在继续往下搜索 </span><br><span class="line">    echo <span class="string">&quot;规则B&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span><span class="regexp"> ^~</span> /blog/ &#123; </span><br><span class="line">  //非正则匹配，匹配/blog/后，停止往下搜索正则，采用这一条</span><br><span class="line">  <span class="attribute">echo</span> <span class="string">&quot;规则C&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~  \.(gif|jpg|png|js|css)$</span> &#123;</span><br><span class="line">    //区分大小写的正则匹配  若匹配成功，停止往下搜索正则，采用这一条</span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则D&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* \.png$</span> &#123;  </span><br><span class="line">   //区分大小写的正则匹配 ，停止往下搜索正则，采用这一条</span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则E&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> / &#123;</span><br><span class="line">  //因为所有的地址都以 / 开头，所以这条规则将匹配到所有请求</span><br><span class="line">  //如果没任何规则匹配上，就采用这条规则</span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则F&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> /blog/detail &#123; </span><br><span class="line">  //最长字符串匹配，若完全匹配成功，就不在继续匹配，否则还会进行正则匹配</span><br><span class="line">  <span class="attribute">echo</span> <span class="string">&quot;规则G&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span> /images &#123;  </span><br><span class="line">    //最长字符串匹配，同上 </span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则Y&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="attribute">location</span><span class="regexp"> ^~</span> /static/files &#123;  </span><br><span class="line">    //非正则匹配，若匹配成功，就不在继续匹配</span><br><span class="line">    <span class="attribute">echo</span> <span class="string">&quot;规则X&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>1、当访问根路径/的时候，比如<a target="_blank" rel="noopener" href="http://www.findme.wang/">http://www.findme.wang/</a> ，会匹配规则A。</p>
+<p>2、当访如<a target="_blank" rel="noopener" href="http://www.findme.wang/login">http://www.findme.wang/login</a> ，会匹配规则B。</p>
+<p>3、当访如<a target="_blank" rel="noopener" href="http://www.findme.wang/login.html">http://www.findme.wang/login.html</a> ，会匹配规则F。</p>
+<p>4、当访如<a target="_blank" rel="noopener" href="http://www.findme.wang/blog/d/3.html">http://www.findme.wang/blog/d/3.html</a> ，会匹配规则C。分析思路，首先看看，“<strong>精确匹配</strong>”是否可以匹配成功，显示不可以；然后，看看是否可以“<strong>普通匹配</strong>”是否可以完全匹配，显示也没有；接着在看看非正则匹配，是否可以匹配成功，发现同规则C匹配上了，所以采用了规则C。</p>
+<p>5、当访如<a target="_blank" rel="noopener" href="http://www.findme.wang/blog/detail/3.html">http://www.findme.wang/blog/detail/3.html</a> ，会匹配规则G。分析思路，首先看看，“<strong>精确匹配</strong>”是否可以匹配成功，显示不可以；然后，看看是否可以“<strong>普通匹配</strong>”是否可以完全匹配，显示可以，采用G。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/21/blog/nginx-lua/" rel="prev" title="nginx_lua 阶段">
+      <i class="fa fa-chevron-left"></i> nginx_lua 阶段
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/01/22/blog/golang%E5%9D%91/" rel="next" title="golang坑">
+      golang坑 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">一、概述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%9B%9B%E7%A7%8D%E5%8F%AF%E9%80%89%E7%9A%84%E6%A0%87%E8%AF%86%E7%AC%A6"><span class="nav-number">2.</span> <span class="nav-text">二、四种可选的标识符</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E3%80%81location%E5%8C%B9%E9%85%8D%E9%A1%BA%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">三、location匹配顺序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%A1%88%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">五、案例</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ycchildcoder</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

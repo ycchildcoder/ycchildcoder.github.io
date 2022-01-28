@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="对刚接触Ngx_lua的读者来说，可能会存在下面两个困惑。 1、Lua在Nginx的哪些阶段可以执行代码？2、Lua在Nginx的每个阶段可以执行哪些操作？ 只有理解了这两个问题，才能在业务中巧妙地利用Ngx_Lua来完成各项需求。 Nginx的11个执行阶段，每个阶段都有自己能够执行的指令，并可以实现不同的功能。Ngx_Lua的功能大部分是基于Nginx这11个执行阶段开发和配置的，Lua代码在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nginx_lua 阶段">
+<meta property="og:url" content="http://example.com/2022/01/21/blog/nginx-lua/index.html">
+<meta property="og:site_name" content="ycchildcoder">
+<meta property="og:description" content="对刚接触Ngx_lua的读者来说，可能会存在下面两个困惑。 1、Lua在Nginx的哪些阶段可以执行代码？2、Lua在Nginx的每个阶段可以执行哪些操作？ 只有理解了这两个问题，才能在业务中巧妙地利用Ngx_Lua来完成各项需求。 Nginx的11个执行阶段，每个阶段都有自己能够执行的指令，并可以实现不同的功能。Ngx_Lua的功能大部分是基于Nginx这11个执行阶段开发和配置的，Lua代码在">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/2699372-010f4989264186a1.png">
+<meta property="article:published_time" content="2022-01-21T08:08:42.000Z">
+<meta property="article:modified_time" content="2022-01-24T02:35:43.717Z">
+<meta property="article:author" content="ycchildcoder">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/2699372-010f4989264186a1.png">
+
+<link rel="canonical" href="http://example.com/2022/01/21/blog/nginx-lua/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>nginx_lua 阶段 | ycchildcoder</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">ycchildcoder</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/21/blog/nginx-lua/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ycchildcoder">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ycchildcoder">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          nginx_lua 阶段
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-01-21 16:08:42" itemprop="dateCreated datePublished" datetime="2022-01-21T16:08:42+08:00">2022-01-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-01-24 10:35:43" itemprop="dateModified" datetime="2022-01-24T10:35:43+08:00">2022-01-24</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>对刚接触Ngx_lua的读者来说，可能会存在下面两个困惑。</p>
+<p>1、Lua在Nginx的哪些阶段可以执行代码？<br>2、Lua在Nginx的每个阶段可以执行哪些操作？</p>
+<p>只有理解了这两个问题，才能在业务中巧妙地利用Ngx_Lua来完成各项需求。</p>
+<p>Nginx的11个执行阶段，每个阶段都有自己能够执行的指令，并可以实现不同的功能。Ngx_Lua的功能大部分是基于Nginx这11个执行阶段开发和配置的，Lua代码在这些指令块中执行，并依赖于它们的执行顺序。本章将对Ngx_Lua的执行阶段进行一一讲解。</p>
+<p>Nginx和Lua最基本的构建块脚本是指令集。指令集用于确定什么时候用户的Lua代码运行和结果将会被怎么使用。下面的图显示指令集的执行顺序。</p>
+<p><img src="https://raw.githubusercontent.com/ycchildcoder/markdown/main/2699372-010f4989264186a1.png" alt="img"></p>
+<p>Lua Nginx 模块指令集</p>
+<table>
+<thead>
+<tr>
+<th align="left">指令</th>
+<th align="left">所处处理阶段</th>
+<th align="left">使用范围</th>
+<th align="left">解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">init_by_lua init_by_lua_file</td>
+<td align="left">loading-config</td>
+<td align="left">http</td>
+<td align="left">nginx Master<strong>进程加载配置</strong>时执行； 通常用于初始化全局配置/预加载Lua模块</td>
+</tr>
+<tr>
+<td align="left">init_worker_by_lua init_worker_by_lua_file</td>
+<td align="left">starting-worker</td>
+<td align="left">http</td>
+<td align="left">每个Nginx Worker<strong>进程启动时调用的计时器</strong>，如果Master进程不允许则只会在init_by_lua之后调用； 通常用于定时拉取配置/数据，或者后端服务的健康检查</td>
+</tr>
+<tr>
+<td align="left">set_by_lua set_by_lua_file</td>
+<td align="left">rewrite</td>
+<td align="left">server,server if,location,location if</td>
+<td align="left"><strong>设置nginx变量</strong>，可以实现复杂的赋值逻辑；<strong>此处是阻塞的</strong>，Lua代码要做到非常快；</td>
+</tr>
+<tr>
+<td align="left">rewrite_by_lua rewrite_by_lua_file</td>
+<td align="left">rewrite tail</td>
+<td align="left">http,server,location,location if</td>
+<td align="left">rewrite阶段处理，可以实现<strong>复杂的转发/重定向逻辑</strong>；</td>
+</tr>
+<tr>
+<td align="left">access_by_lua access_by_lua_file</td>
+<td align="left">access tail</td>
+<td align="left">http,server,location,location if</td>
+<td align="left">请求访问阶段处理，用于<strong>访问控制</strong></td>
+</tr>
+<tr>
+<td align="left">content_by_lua content_by_lua_file</td>
+<td align="left">content</td>
+<td align="left">location，location if</td>
+<td align="left">内容处理器，<strong>接收请求处理</strong>并输出响应</td>
+</tr>
+<tr>
+<td align="left">header_filter_by_lua header_filter_by_lua_file</td>
+<td align="left">output-header-filter</td>
+<td align="left">http，server，location，location if</td>
+<td align="left">设置header和cookie</td>
+</tr>
+<tr>
+<td align="left">body_filter_by_lua body_filter_by_lua_file</td>
+<td align="left">output-body-filter</td>
+<td align="left">http，server，location，location if</td>
+<td align="left">对响应数据进行过滤，比如截断、替换。</td>
+</tr>
+<tr>
+<td align="left">log_by_lua log_by_lua_file</td>
+<td align="left">log</td>
+<td align="left">http，server，location，location if</td>
+<td align="left">log阶段处理，比如记录访问量/统计平均响应时间</td>
+</tr>
+</tbody></table>
+<p>更详细的解释请参考<a target="_blank" rel="noopener" href="http://wiki.nginx.org/HttpLuaModule#Directives%E3%80%82%E5%A6%82%E4%B8%8A%E6%8C%87%E4%BB%A4%E5%BE%88%E5%A4%9A%E5%B9%B6%E4%B8%8D%E5%B8%B8%E7%94%A8%EF%BC%8C%E5%9B%A0%E6%AD%A4%E6%88%91%E4%BB%AC%E5%8F%AA%E6%8B%BF%E5%85%B6%E4%B8%AD%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86%E5%81%9A%E6%BC%94%E7%A4%BA%E3%80%82">http://wiki.nginx.org/HttpLuaModule#Directives。如上指令很多并不常用，因此我们只拿其中的一部分做演示。</a></p>
+<h2 id="init-by-lua"><a href="#init-by-lua" class="headerlink" title="init_by_lua"></a>init_by_lua</h2><p>每次Nginx重新加载配置时执行，可以用它来完成一些耗时模块的加载，或者初始化一些全局配置；在Master进程创建Worker进程时，此指令中加载的全局变量会进行Copy-OnWrite，即会复制到所有全局变量到Worker进程。</p>
+<h4 id="1-nginx-conf配置文件中的http部分添加如下代码"><a href="#1-nginx-conf配置文件中的http部分添加如下代码" class="headerlink" title="1. nginx.conf配置文件中的http部分添加如下代码"></a>1. nginx.conf配置文件中的http部分添加如下代码</h4><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#共享全局变量，在所有worker间共享</span></span><br><span class="line"><span class="attribute">lua_shared_dict</span> shared_data <span class="number">1m</span>;</span><br><span class="line"></span><br><span class="line"><span class="attribute">init_by_lua_file</span> /usr/example/lua/init.lua;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-init-lua"><a href="#2-init-lua" class="headerlink" title="2. init.lua"></a>2. init.lua</h4><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">-- 初始化耗时的模块</span><br><span class="line"><span class="attribute">local</span> redis = require(<span class="string">&quot;resty.redis&quot;</span>)</span><br><span class="line">local cjson = require(<span class="string">&quot;cjson&quot;</span>)</span><br><span class="line"></span><br><span class="line">-- 全局变量，不推荐</span><br><span class="line">count = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">-- 共享全局内存</span><br><span class="line">local shared_data = ngx.shared.shared_data</span><br><span class="line">shared_data:set(<span class="string">&quot;count&quot;</span>, <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="一、-init-by-lua-block"><a href="#一、-init-by-lua-block" class="headerlink" title="一、 init_by_lua_block"></a>一、 init_by_lua_block</h3><p>init_by_lua_block是init_by_lua的替代版本，在OpenResty 1.9.3.1或Lua-Nginx-Modulev 0.9.17之前使用的都是init_by_lua。init_by_lua_block比init_by_lua更灵活，所以建议优先选用init_by_lua_block。<br>本章中的执行阶段都采用*_block格式的指令，后续不再说明。</p>
+<h4 id="1-1-阶段说明"><a href="#1-1-阶段说明" class="headerlink" title="1.1　阶段说明"></a>1.1　阶段说明</h4><p>语法：init_by_lua_block {lua-script-str}<br>配置环境：http<br>阶段：loading-config<br>含义：当Nginx的master进程加载Nginx配置文件（加载或重启Nginx进程）时，会在全局的Lua VM（Virtual Machine，虚拟机）层上运行<lua-script-str> 指定的代码，每次当Nginx获得HUP（即Hangup）重载信号加载进程时，代码都会被重新执行。</p>
+<h4 id="1-2-初始化配置"><a href="#1-2-初始化配置" class="headerlink" title="1.2 初始化配置"></a>1.2 初始化配置</h4><p>在loading-config阶段一般会执行如下操作。<br>1．初始化Lua全局变量，特别适合用来处理在启动master进程时就要求存在的数据，对CPU消耗较多的功能也可以在此处处理。<br>2．预加载模块。<br>3．初始化lua_shared_dict共享内存的数据（关于共享内存详见第10章）。<br>示例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span>  webuser webuser;</span><br><span class="line"><span class="attribute">worker_processes</span>  <span class="number">1</span>;</span><br><span class="line"><span class="attribute">worker_rlimit_nofile</span> <span class="number">10240</span>;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">use</span> <span class="literal">epoll</span>;</span><br><span class="line">    <span class="attribute">worker_connections</span>  <span class="number">10240</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">    <span class="attribute">include</span>       mime.types;</span><br><span class="line">    <span class="attribute">default_type</span>  application/octet-stream;</span><br><span class="line">    <span class="attribute">log_format</span> main <span class="string">&#x27;$remote_addr-$remote_user[$time_local] &quot;$request&quot; &#x27;</span></span><br><span class="line">                      <span class="string">&#x27;$status $body_bytes_sent &quot;$http_referer&quot; &#x27;</span> </span><br><span class="line">                      <span class="string">&#x27;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot; &quot;$request_time&quot; &quot;$upstream_addr $upstream_status $upstream_response_time&quot;  &quot;upstream_time_sum:$upstream_time_sum&quot;  &quot;jk_uri:$jk_uri&quot;&#x27;</span>;</span><br><span class="line">    <span class="attribute">access_log</span>  logs/access.log  main;</span><br><span class="line">    <span class="attribute">sendfile</span>        <span class="literal">on</span>;</span><br><span class="line">    <span class="attribute">keepalive_timeout</span>  <span class="number">65</span>;</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    <span class="attribute">lua_package_path</span> <span class="string">&quot;/usr/local/nginx_1.12.2/conf/lua_modules/?.lua;;&quot;</span>;</span><br><span class="line">    <span class="attribute">lua_package_cpath</span> <span class="string">&quot;/usr/local/nginx_1.12.2/conf/lua_modules/c_package/?.so;;&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="attribute">lua_shared_dict</span> dict_a <span class="number">100k</span>;  --声明一个Lua共享内存，dict_a为100<span class="attribute">KB</span></span><br><span class="line">    init_by_lua_block &#123;</span><br><span class="line">-- cjson.so文件需要手动存放在lua_package_cpath搜索路径下，如果是OpenResty，就不必了，因为它默认支持该操作</span><br><span class="line">          <span class="attribute">cjson</span> = require <span class="string">&quot;cjson&quot;</span>; </span><br><span class="line">          <span class="attribute">local</span> dict_a = ngx.shared.dict_a;</span><br><span class="line">          dict_a:set(&quot;abc&quot;, 9)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">        <span class="attribute">server_name</span>  testnginx.com;</span><br><span class="line">        <span class="attribute">location</span> / &#123;</span><br><span class="line">           <span class="section">content_by_lua_block</span> &#123;</span><br><span class="line">               ngx.say(cjson.encode(&#123;<span class="attribute">a</span> = <span class="number">1</span>, b = <span class="number">2</span>&#125;))</span><br><span class="line">               local dict_a = ngx.shared.dict_a;</span><br><span class="line">               ngx.say(&quot;abc=&quot;,dict_a:get(&quot;abc&quot;))</span><br><span class="line">           &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行结果如下：</p>
+<p>curl -I <a target="_blank" rel="noopener" href="http://testnginx.com/">http://testnginx.com/</a><br>{“a”:1,”b”:2}<br>abc=9</p>
+<h4 id="1-3-控制初始值"><a href="#1-3-控制初始值" class="headerlink" title="1.3　控制初始值"></a>1.3　控制初始值</h4><p>在init_by_lua_block阶段设置的初始值，即使在其他执行阶段被修改过，当Nginx重载配置时，这些值就又会恢复到初始状态。如果在重载Nginx配置时不希望再次改动这些初始值，可以在代码中做如下调整。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">init_by_lua_block</span> &#123;</span><br><span class="line">      <span class="attribute">local</span> cjson = require <span class="string">&quot;cjson&quot;</span>;</span><br><span class="line">      <span class="attribute">local</span> dict_a = ngx.shared.dict_a;</span><br><span class="line">      <span class="attribute">local</span> v = dict_a:get(<span class="string">&quot;abc&quot;</span>);  --判断初始值是否已经被<span class="attribute">set</span></span><br><span class="line">      if not v then                 --如果没有，就执行初始化操作</span><br><span class="line">        dict_a:set(<span class="string">&quot;abc&quot;</span>, <span class="number">9</span>)</span><br><span class="line">      end</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="1-4-init-by-lua-file"><a href="#1-4-init-by-lua-file" class="headerlink" title="1.4　init_by_lua_file"></a>1.4　init_by_lua_file</h4><p>init_by_lua_file和init_by_lua_block的作用一样，主要用于将init_by_lua_block的内容转存到指定的文件中，这样Lua代码就不必全部写在Nginx配置里了，易读性更强。<br>init_by_lua_file支持配置绝对路径和相对路径。<strong>相对路径是在启动Nginx时由-p PATH 决定的</strong>，如果启动Nginx时没有配置-p PATH，就会使用编译时–prefix的值，该值一般存放在Nginx的prefix（也可以用prefix（也可以用{prefix}来表示）变量中。init_by_lua_file和Nginx的include指令的相对路径一致。<br>举例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">init_by_lua_file</span> conf/lua/init.lua;  --相对路径</span><br><span class="line"><span class="attribute">init_by_lua_file</span> /usr/local/nginx/conf/lua/init.lua; --绝对路径</span><br><span class="line">init.lua文件的内容如下：</span><br><span class="line"><span class="attribute">cjson</span> = require <span class="string">&quot;cjson&quot;</span></span><br><span class="line">local dict_a = ngx.shared.dict_a</span><br><span class="line">local v = dict_a:get(<span class="string">&quot;abc&quot;</span>)</span><br><span class="line">if not v then</span><br><span class="line">   dict_a:set(<span class="string">&quot;abc&quot;</span>, <span class="number">9</span>)</span><br><span class="line">end  </span><br></pre></td></tr></table></figure>
+<p>1.5　可使用的Lua API指令<br>init_by_lua是Nginx配置加载的阶段，很多Nginx API for Lua命令是不支持的。目前已知支持的Nginx API for Lua的命令有ngx.log、ngx.shared.DICT、print。<br>注意：init_by_lua中的表示通配符，init_by_lua即所有以init_by_lua开头的API。后续的通配符亦是如此，不再另行说明。</p>
+<p>二、init_worker_by_lua_block<br>2.1　阶段说明<br><strong>语法：</strong>init_worker_by_lua_block {lua-script-str}<br><strong>配置环境：</strong>http<br><strong>阶段：</strong>starting-worker<br><strong>含义：</strong>当master进程被启动后，每个worker进程都会执行Lua代码。如果Nginx禁用了master进程，init_by_lua*将会直接运行。</p>
+<p>2.2　启动Nginx的定时任务<br>在init_worker_by_lua_block执行阶段最常见的功能是执行定时任务。示例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span>  webuser webuser;</span><br><span class="line"><span class="attribute">worker_processes</span>  <span class="number">3</span>;</span><br><span class="line"><span class="attribute">worker_rlimit_nofile</span> <span class="number">10240</span>;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">use</span> <span class="literal">epoll</span>;</span><br><span class="line">    <span class="attribute">worker_connections</span>  <span class="number">10240</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">    <span class="attribute">include</span>       mime.types;</span><br><span class="line">    <span class="attribute">default_type</span>  application/octet-stream;</span><br><span class="line">    <span class="attribute">sendfile</span>        <span class="literal">on</span>;</span><br><span class="line">    <span class="attribute">keepalive_timeout</span>  <span class="number">65</span>;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">upstream</span>  test_12 &#123;</span><br><span class="line">        <span class="attribute">server</span> <span class="number">127.0.0.1:81</span>  weight=<span class="number">20</span>  max_fails=<span class="number">300000</span> fail_timeout=<span class="number">5s</span>;</span><br><span class="line">        <span class="attribute">server</span> <span class="number">127.0.0.1:82</span>  weight=<span class="number">20</span>  max_fails=<span class="number">300000</span> fail_timeout=<span class="number">5s</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="attribute">lua_package_path</span> <span class="string">&quot;<span class="variable">$&#123;prefix&#125;</span>conf/lua_modules/?.lua;;&quot;</span>;</span><br><span class="line">    <span class="attribute">lua_package_cpath</span> <span class="string">&quot;<span class="variable">$&#123;prefix&#125;</span>conf/lua_modules/c_package/?.so;;&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="section">init_worker_by_lua_block</span>  &#123;</span><br><span class="line">        <span class="attribute">local</span> delay = <span class="number">3</span>  --<span class="number">3</span>秒</span><br><span class="line">        local cron_a   </span><br><span class="line">    --定时任务的函数</span><br><span class="line">        cron_a = function (premature)   </span><br><span class="line">            if not  premature then  --如果执行函数时没有传参，则该任务会一直被触发执行</span><br><span class="line">                ngx.log(ngx.ERR, <span class="string">&quot;Just do it !&quot;</span>)</span><br><span class="line">            end</span><br><span class="line">    </span><br><span class="line">        end</span><br><span class="line">    --每隔delay参数值的时间，就执行一次cron_a函数</span><br><span class="line">        local ok, err = ngx.timer.every(delay, cron_a)   </span><br><span class="line">        if not ok then</span><br><span class="line">            ngx.log(ngx.ERR, <span class="string">&quot;failed to create the timer: &quot;</span>, err)</span><br><span class="line">            return</span><br><span class="line">        end</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>2.3　动态进行后端健康检查<br>在init_worker_by_lua_block阶段，也可以实现后端健康检查的功能，用于检查后端HTTP服务是否正常，类似于Nginx商业版中的health_check功能。<br>如果使用OpenResty 1.9.3.2及以上的版本，默认已支持此模块；如果使用Nginx，则首先需要安装此模块<br>实现动态进行后端健康检查的功能，配置如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">user</span>  webuser webuser;</span><br><span class="line"><span class="attribute">worker_processes</span>  <span class="number">3</span>;</span><br><span class="line"><span class="attribute">worker_rlimit_nofile</span> <span class="number">10240</span>;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">use</span> <span class="literal">epoll</span>;</span><br><span class="line">    <span class="attribute">worker_connections</span>  <span class="number">10240</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">    <span class="attribute">include</span>       mime.types;</span><br><span class="line">    <span class="attribute">default_type</span>  application/octet-stream;</span><br><span class="line">    <span class="attribute">sendfile</span>        <span class="literal">on</span>;</span><br><span class="line">    <span class="attribute">keepalive_timeout</span>  <span class="number">65</span>;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">upstream</span>  test_12 &#123;</span><br><span class="line">        <span class="attribute">server</span> <span class="number">127.0.0.1:81</span>  weight=<span class="number">20</span>  max_fails=<span class="number">10</span> fail_timeout=<span class="number">5s</span>;</span><br><span class="line">        <span class="attribute">server</span> <span class="number">127.0.0.1:82</span>  weight=<span class="number">20</span>  max_fails=<span class="number">10</span> fail_timeout=<span class="number">5s</span>;</span><br><span class="line">        <span class="attribute">server</span> <span class="number">127.0.0.1:8231</span>  weight=<span class="number">20</span>  max_fails=<span class="number">10</span> fail_timeout=<span class="number">5s</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="attribute">lua_shared_dict</span> healthcheck <span class="number">1m</span>;  <span class="comment"># 存放upstream servers的共享内存，后端服务器组越多，配置就越大</span></span><br><span class="line">    <span class="attribute">lua_socket_log_errors</span> <span class="literal">off</span>;  <span class="comment"># 当TCP发送失败时，会发送error日志到error.log中，该过程会增加性能开销，建议关闭，以避免在健康检查过程中出现多台服务器宕机的情况，异常情况请使用ngx.log来记录</span></span><br><span class="line">    <span class="attribute">lua_package_path</span> <span class="string">&quot;<span class="variable">$&#123;prefix&#125;</span>conf/lua_modules/?.lua;;&quot;</span>;</span><br><span class="line">    <span class="attribute">lua_package_cpath</span> <span class="string">&quot;<span class="variable">$&#123;prefix&#125;</span>conf/lua_modules/c_package/?.so;;&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="section">init_worker_by_lua_block</span>  &#123;</span><br><span class="line">        <span class="attribute">local</span> hc = require <span class="string">&quot;resty.upstream.healthcheck&quot;</span></span><br><span class="line">        local ok, err = hc.spawn_checker&#123;</span><br><span class="line">            <span class="attribute">shm</span> = <span class="string">&quot;healthcheck&quot;</span>,  -- 使用共享内存 </span><br><span class="line">            upstream = <span class="string">&quot;test_12&quot;</span>, -- 进行健康检查的upstream名字</span><br><span class="line">            type = <span class="string">&quot;http&quot;</span>,        -- 检查类型是http</span><br><span class="line">            http_req = <span class="string">&quot;GET /status HTTP/1.0\r\nHost: testnginx.com\r\n\r\n&quot;</span>,</span><br><span class="line">                    -- 用来发送HTTP请求的格式和数据，核实服务是否正常 </span><br><span class="line">            interval = <span class="number">3000</span>,  -- 设置检查的频率为每<span class="number">3s</span>一次</span><br><span class="line">            timeout = <span class="number">1000</span>,   -- 设置请求的超时时间为<span class="number">1s</span></span><br><span class="line">            fall = <span class="number">3</span>,  --设置连续失败<span class="number">3</span>次后就把后端服务改为down </span><br><span class="line">            rise = <span class="number">2</span>,  --设置连续成功<span class="number">2</span>次后就把后端服务改为up </span><br><span class="line">        valid_statuses = &#123;200, 302&#125;,  --设置请求成功的响应状态码是200和302</span><br><span class="line">            <span class="attribute">concurrency</span> = <span class="number">10</span>,  --设置发送请求的并发等级</span><br><span class="line">        &#125;</span><br><span class="line">        if not ok then</span><br><span class="line">            ngx.log(ngx.ERR, <span class="string">&quot;failed to spawn health checker: &quot;</span>, err)</span><br><span class="line">            return</span><br><span class="line">        end</span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">        <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">        <span class="attribute">server_name</span>  testnginx.com;</span><br><span class="line">        <span class="attribute">location</span> / &#123;</span><br><span class="line">           <span class="attribute">proxy_pass</span> http://test_12;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment"># /status 定义了后端健康检查结果的输出页面</span></span><br><span class="line">        <span class="attribute">location</span> = /status &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/plain;</span><br><span class="line">            <span class="section">content_by_lua_block</span> &#123;</span><br><span class="line">                <span class="attribute">local</span> hc = require <span class="string">&quot;resty.upstream.healthcheck&quot;</span></span><br><span class="line">                --输出当前检查结果是哪个worker进程的</span><br><span class="line">                ngx.say(<span class="string">&quot;Nginx Worker PID: &quot;</span>, ngx.worker.pid())</span><br><span class="line">--status_page()输出后端服务器的详细情况</span><br><span class="line">                ngx.print(hc.status_page())</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>访问<a target="_blank" rel="noopener" href="http://testnginx.com/status%E6%9F%A5%E7%9C%8B%E6%A3%80%E6%9F%A5%E7%9A%84%E7%BB%93%E6%9E%9C%EF%BC%8C%E5%9B%BE8-1%E6%89%80%E7%A4%BA%E4%B8%BA%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%9C%E3%80%82">http://testnginx.com/status查看检查的结果，图8-1所示为健康检查数据结果。</a></p>
+<p>图8-1　健康检查数据结果<br>如果要检查多个upstream，则配置如下（只有黑色加粗位置的配置有变化）：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">local</span> ok, err = hc.spawn_checker&#123;</span><br><span class="line">    <span class="attribute">shm</span> = <span class="string">&quot;healthcheck&quot;</span>,</span><br><span class="line">    upstream = <span class="string">&quot;test_12&quot;</span>,</span><br><span class="line">    type = <span class="string">&quot;http&quot;</span>,</span><br><span class="line"></span><br><span class="line">    http_req = <span class="string">&quot;GET /status HTTP/1.0\r\nHost: testnginx.com\r\n\r\n&quot;</span>,</span><br><span class="line">    </span><br><span class="line">    interval = <span class="number">3000</span>,</span><br><span class="line">    timeout = <span class="number">1000</span>,</span><br><span class="line">    fall = <span class="number">3</span>,</span><br><span class="line">    rise = <span class="number">2</span>,</span><br><span class="line">    valid_statuses = &#123;200, 302&#125;,  </span><br><span class="line">    <span class="attribute">concurrency</span> = <span class="number">10</span>, </span><br><span class="line">&#125;</span><br><span class="line">local ok, err = hc.spawn_checker&#123;</span><br><span class="line">    <span class="attribute">shm</span> = <span class="string">&quot;healthcheck&quot;</span>,</span><br><span class="line">    upstream = <span class="string">&quot;test_34&quot;</span>,</span><br><span class="line">    type = <span class="string">&quot;http&quot;</span>,</span><br><span class="line"></span><br><span class="line">    http_req = <span class="string">&quot;GET /test HTTP/1.0\r\nHost: testnginx.com\r\n\r\n&quot;</span>,</span><br><span class="line">    interval = <span class="number">3000</span>,</span><br><span class="line">    timeout = <span class="number">1000</span>,</span><br><span class="line">    fall = <span class="number">3</span>,</span><br><span class="line">    rise = <span class="number">2</span>,</span><br><span class="line">    valid_statuses = &#123;200, 302&#125;, </span><br><span class="line">    <span class="attribute">concurrency</span> = <span class="number">10</span>,  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果把lua_socket_log_errors设置为on，那么当有异常出现时，例如出现了超时，就会往error.log里写日志，日志记录如图8-2所示。</p>
+<p>图8-2　日志记录<br>经过lua-resty-upstream-healthcheck的健康检查发现异常的服务器后，Nginx会动态地将异常服务器在upstream中禁用，以实现更精准的故障转移。</p>
+<p>三、set_by_lua_block<br>3.1　阶段说明<br><strong>语法：</strong>set_by_lua_block res {lua-script-str}<br><strong>配置环境：</strong>server，server if，location，location if<br><strong>阶段：</strong>rewrite<br><strong>含义：</strong>执行<lua-script-str>代码，并将返回的字符串赋值给res</p>
+<p>3.2　变量赋值<br>本指令一次只能返回一个值，并赋值给变量res（即只有一个res（即只有一个res被赋值），示例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span>  testnginx.com;</span><br><span class="line">    <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">set</span> $a <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">    <span class="attribute">set_by_lua_block</span> $a &#123;</span><br><span class="line">         <span class="attribute">local</span> t = <span class="string">&#x27;tes&#x27;</span></span><br><span class="line">         return t</span><br><span class="line">    &#125;</span><br><span class="line">    return <span class="number">200</span> $a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果如下：</p>
+<p>  curl <a target="_blank" rel="noopener" href="http://testnginx.com/">http://testnginx.com/</a><br>test</p>
+<p>那如果希望返回多个变量，该怎么办呢？可以使用ngx.var.VARIABLE，示例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span>  testnginx.com;</span><br><span class="line">    <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="comment">#使用ngx.var.VARIABLE前需先定义变量</span></span><br><span class="line">    <span class="attribute">set</span> $b <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">    <span class="attribute">set_by_lua_block</span> $a &#123;</span><br><span class="line">        <span class="attribute">local</span> t = <span class="string">&#x27;test&#x27;</span></span><br><span class="line">        ngx.var.b = <span class="string">&#x27;test_b&#x27;</span></span><br><span class="line">        return t</span><br><span class="line">    &#125;</span><br><span class="line">    return <span class="number">200</span> $a,$b;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果如下：</p>
+<p>  curl <a target="_blank" rel="noopener" href="http://testnginx.com/test">http://testnginx.com/test</a><br>test,test_b</p>
+<p>3.2　Rewrite阶段的混用模式<br>因为set_by_lua_block处在rewrite阶段，所以它可以和ngx_http_rewrite_module、set-misc-nginx-module，以及array-var-nginx-module一起使用，在代码执行时，按照配置文件的顺序从上到下执行，示例如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span>  testnginx.com;</span><br><span class="line">    <span class="attribute">location</span> / &#123;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">set</span> $a <span class="string">&#x27;123&#x27;</span>;</span><br><span class="line">    <span class="attribute">set_by_lua_block</span> $b &#123;</span><br><span class="line">        <span class="attribute">local</span> t = <span class="string">&#x27;bbb&#x27;</span></span><br><span class="line">        return t</span><br><span class="line">    &#125;</span><br><span class="line">    set_by_lua_block $c &#123;</span><br><span class="line">        <span class="attribute">local</span> t = <span class="string">&#x27;ccc&#x27;</span>  .. ngx.var.b</span><br><span class="line">        return t</span><br><span class="line">    &#125;</span><br><span class="line">    set $d <span class="string">&quot;456$c&quot;</span>; </span><br><span class="line">    <span class="attribute">return</span> <span class="number">200</span> $a,$b,$c,$d;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从执行结果可以看出数据是从上到下执行的，如下所示：</p>
+<p> curl  <a target="_blank" rel="noopener" href="http://testnginx.com/test">http://testnginx.com/test</a><br>123,bbb,cccbbb,456cccbbb<br>1.<br>2.<br>3.3　阻塞事件<br>set_by_lua_block指令块在Nginx中执行的指令是阻塞型操作，因此应尽量在这个阶段执行轻、快、短、少的代码，以避免耗时过多。set_by_lua_block不支持非阻塞I/O，所以不支持yield当前Lua的轻线程。<br>3.4　被禁用的Lua API指令<br>在set_by_lua_block阶段的上下文中，下面的Lua API是被禁止的（只罗列部分）。<br>输出类型的API函数（如ngx.say和ngx.send_headers）。<br>控制类型的API函数（如ngx.exit）。<br>子请求的API函数（如ngx.location.capture和ngx.location.capture_multi）。<br>Cosocket API函数（如ngx.socket.tcp和ngx.req.socket）。<br>休眠API函数ngx.sleep。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/21/blog/go-interface/" rel="prev" title="golang map初始化及使用">
+      <i class="fa fa-chevron-left"></i> golang map初始化及使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/01/21/blog/nginx-location/" rel="next" title="nginx_location">
+      nginx_location <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#init-by-lua"><span class="nav-number">1.</span> <span class="nav-text">init_by_lua</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-nginx-conf%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84http%E9%83%A8%E5%88%86%E6%B7%BB%E5%8A%A0%E5%A6%82%E4%B8%8B%E4%BB%A3%E7%A0%81"><span class="nav-number">1.0.1.</span> <span class="nav-text">1. nginx.conf配置文件中的http部分添加如下代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-init-lua"><span class="nav-number">1.0.2.</span> <span class="nav-text">2. init.lua</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81-init-by-lua-block"><span class="nav-number">1.1.</span> <span class="nav-text">一、 init_by_lua_block</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-%E9%98%B6%E6%AE%B5%E8%AF%B4%E6%98%8E"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1　阶段说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-%E5%88%9D%E5%A7%8B%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 初始化配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-%E6%8E%A7%E5%88%B6%E5%88%9D%E5%A7%8B%E5%80%BC"><span class="nav-number">1.1.3.</span> <span class="nav-text">1.3　控制初始值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-4-init-by-lua-file"><span class="nav-number">1.1.4.</span> <span class="nav-text">1.4　init_by_lua_file</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ycchildcoder</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

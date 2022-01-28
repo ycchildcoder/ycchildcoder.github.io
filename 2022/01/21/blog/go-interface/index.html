@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="golang中的接口分为带方法的接口和空接口。 带方法的接口在底层用iface表示，空接口的底层则是eface表示。下面我们透过底层分别看一下这两种类型的接口原理。 以下是接口的原型： 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849&#x2F;&#x2F;runtime&#x2F;runtime2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="golang map初始化及使用">
+<meta property="og:url" content="http://example.com/2022/01/21/blog/go-interface/index.html">
+<meta property="og:site_name" content="ycchildcoder">
+<meta property="og:description" content="golang中的接口分为带方法的接口和空接口。 带方法的接口在底层用iface表示，空接口的底层则是eface表示。下面我们透过底层分别看一下这两种类型的接口原理。 以下是接口的原型： 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849&#x2F;&#x2F;runtime&#x2F;runtime2">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-01-21T07:42:23.000Z">
+<meta property="article:modified_time" content="2022-01-25T07:23:51.543Z">
+<meta property="article:author" content="ycchildcoder">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2022/01/21/blog/go-interface/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>golang map初始化及使用 | ycchildcoder</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">ycchildcoder</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/21/blog/go-interface/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ycchildcoder">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ycchildcoder">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          golang map初始化及使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-01-21 15:42:23" itemprop="dateCreated datePublished" datetime="2022-01-21T15:42:23+08:00">2022-01-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-01-25 15:23:51" itemprop="dateModified" datetime="2022-01-25T15:23:51+08:00">2022-01-25</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>golang中的接口分为带方法的接口和空接口。 带方法的接口在底层用iface表示，空接口的底层则是eface表示。下面我们透过底层分别看一下这两种类型的接口原理。</p>
+<p>以下是接口的原型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">//runtime/runtime2.go</span><br><span class="line"></span><br><span class="line">//非空接口</span><br><span class="line">type iface struct &#123;</span><br><span class="line">	tab  *itab</span><br><span class="line">	data unsafe.Pointer</span><br><span class="line">&#125;</span><br><span class="line">type itab struct &#123;</span><br><span class="line">	inter  *interfacetype</span><br><span class="line">	_type  *_type</span><br><span class="line">	link   *itab</span><br><span class="line">	hash   uint32 // copy of _type.hash. Used for type switches.</span><br><span class="line">	bad    bool   // type does not implement interface</span><br><span class="line">	inhash bool   // has this itab been added to hash?</span><br><span class="line">	unused [2]byte</span><br><span class="line">	fun    [1]uintptr // variable sized</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//******************************</span><br><span class="line"></span><br><span class="line">//空接口</span><br><span class="line">type eface struct &#123;</span><br><span class="line">	_type *_type</span><br><span class="line">	data  unsafe.Pointer</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//========================</span><br><span class="line">//这两个接口共同的字段_type</span><br><span class="line">//========================</span><br><span class="line"></span><br><span class="line">//runtime/type.go</span><br><span class="line">type _type struct &#123;</span><br><span class="line">	size       uintptr</span><br><span class="line">	ptrdata    uintptr // size of memory prefix holding all pointers</span><br><span class="line">	hash       uint32</span><br><span class="line">	tflag      tflag</span><br><span class="line">	align      uint8</span><br><span class="line">	fieldalign uint8</span><br><span class="line">	kind       uint8</span><br><span class="line">	alg        *typeAlg</span><br><span class="line">	// gcdata stores the GC type data for the garbage collector.</span><br><span class="line">	// If the KindGCProg bit is set in kind, gcdata is a GC program.</span><br><span class="line">	// Otherwise it is a ptrmask bitmap. See mbitmap.go for details.</span><br><span class="line">	gcdata    *byte</span><br><span class="line">	str       nameOff</span><br><span class="line">	ptrToThis typeOff</span><br><span class="line">&#125;</span><br><span class="line">//_type这个结构体是golang定义数据类型要用的，讲到反射文章的时候在具体讲解这个_type。</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<h1 id="1-iface"><a href="#1-iface" class="headerlink" title="1.iface"></a>1.iface</h1><h3 id="1-1-变量类型是如何转换成接口类型的？"><a href="#1-1-变量类型是如何转换成接口类型的？" class="headerlink" title="1.1 变量类型是如何转换成接口类型的？"></a>1.1 变量类型是如何转换成接口类型的？</h3><p>看下方代码:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line">type Person interface &#123;</span><br><span class="line">   run()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">type xitehip struct &#123;</span><br><span class="line">   age uint8</span><br><span class="line">&#125;</span><br><span class="line">func (o xitehip)run() &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func main()  &#123;</span><br><span class="line">   var xh Person = xitehip&#123;age:18&#125;</span><br><span class="line">   xh.run()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>xh变量是Person接口类型，那xitehip的struct类型是如何转换成接口类型的呢？ 看一下生成的汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">0x001d 00029 (main.go:13)	PCDATA	$2, $0</span><br><span class="line">0x001d 00029 (main.go:13)	PCDATA	$0, $0</span><br><span class="line">0x001d 00029 (main.go:13)	MOVB	$0, &quot;&quot;..autotmp_1+39(SP)</span><br><span class="line">0x0022 00034 (main.go:13)	MOVB	$18, &quot;&quot;..autotmp_1+39(SP)</span><br><span class="line">0x0027 00039 (main.go:13)	PCDATA	$2, $1</span><br><span class="line">0x0027 00039 (main.go:13)	LEAQ	go.itab.&quot;&quot;.xitehip,&quot;&quot;.Person(SB), AX</span><br><span class="line">0x002e 00046 (main.go:13)	PCDATA	$2, $0</span><br><span class="line">0x002e 00046 (main.go:13)	MOVQ	AX, (SP)</span><br><span class="line">0x0032 00050 (main.go:13)	PCDATA	$2, $1</span><br><span class="line">0x0032 00050 (main.go:13)	LEAQ	&quot;&quot;..autotmp_1+39(SP), AX</span><br><span class="line">0x0037 00055 (main.go:13)	PCDATA	$2, $0</span><br><span class="line">0x0037 00055 (main.go:13)	MOVQ	AX, 8(SP)</span><br><span class="line">0x003c 00060 (main.go:13)	CALL	runtime.convT2Inoptr(SB)</span><br><span class="line">0x0041 00065 (main.go:13)	MOVQ	16(SP), AX</span><br><span class="line">0x0046 00070 (main.go:13)	PCDATA	$2, $2</span><br><span class="line">0x0046 00070 (main.go:13)	MOVQ	24(SP), CX</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>从汇编发现有个转换函数： runtime.convT2Inoptr(SB) 我们去看一下这个函数的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">func convT2Inoptr(tab *itab, elem unsafe.Pointer) (i iface) &#123;</span><br><span class="line">        t := tab._type</span><br><span class="line">        if raceenabled &#123;</span><br><span class="line">                raceReadObjectPC(t, elem, getcallerpc(), funcPC(convT2Inoptr))</span><br><span class="line">        &#125;</span><br><span class="line">        if msanenabled &#123;</span><br><span class="line">                msanread(elem, t.size)</span><br><span class="line">        &#125;</span><br><span class="line">        x := mallocgc(t.size, t, false)//为elem申请内存</span><br><span class="line">        memmove(x, elem, t.size)//将elem所指向的数据赋值到新的内存中</span><br><span class="line">        i.tab = tab //设置iface的tab</span><br><span class="line">        i.data = x //设置iface的data</span><br><span class="line">        return</span><br><span class="line">&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>从以上实现我们发现编译器生成的struct原始数据会复制一份，然后将新的数据地址赋值给iface.data从而生成了完整的iface，这样如下原始代码中的xh就转换成了Person接口类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var xh Person = xitehip&#123;age:18&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-2-指针变量类型是如何转换成接口类型的呢？"><a href="#1-2-指针变量类型是如何转换成接口类型的呢？" class="headerlink" title="1.2 指针变量类型是如何转换成接口类型的呢？"></a>1.2 指针变量类型是如何转换成接口类型的呢？</h3><p>还是上面的例子只是将</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var xh Person = xitehip&#123;age:18&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>换成了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var xh Person = &amp;xitehip&#123;age:18&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>那指针类型的变量是如何转换成接口类型的呢？ 见下方汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">0x001d 00029 (main.go:13)	PCDATA	$2, $1</span><br><span class="line">0x001d 00029 (main.go:13)	PCDATA	$0, $0</span><br><span class="line">0x001d 00029 (main.go:13)	LEAQ	type.&quot;&quot;.xitehip(SB), AX</span><br><span class="line">0x0024 00036 (main.go:13)	PCDATA	$2, $0</span><br><span class="line">0x0024 00036 (main.go:13)	MOVQ	AX, (SP)</span><br><span class="line">0x0028 00040 (main.go:13)	CALL	runtime.newobject(SB)</span><br><span class="line">0x002d 00045 (main.go:13)	PCDATA	$2, $1</span><br><span class="line">0x002d 00045 (main.go:13)	MOVQ	8(SP), AX</span><br><span class="line">0x0032 00050 (main.go:13)	MOVB	$18, (AX)</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>发现了这个函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">runtime.newobject(SB)</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>去看一下具体实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// implementation of new builtin</span><br><span class="line">// compiler (both frontend and SSA backend) knows the signature</span><br><span class="line">// of this function</span><br><span class="line">func newobject(typ *_type) unsafe.Pointer &#123;</span><br><span class="line">        return mallocgc(typ.size, typ, true)</span><br><span class="line">&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>编译器自动生成了iface并将&amp;xitehip{age:18}创建的对象的地址（通过newobject）赋值给iface.data。就是xitehip这个结构体没有被复制</p>
+<h3 id="1-4-接口调用规则"><a href="#1-4-接口调用规则" class="headerlink" title="1.4 接口调用规则"></a>1.4 接口调用规则</h3><p>把上面的例子添加一个eat()接口方法并实现它（注意这个接口方法的实现的接受者是指针）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line">type Person interface &#123;</span><br><span class="line">	run()</span><br><span class="line">	eat(string)</span><br><span class="line">&#125;</span><br><span class="line">type xitehip struct &#123;</span><br><span class="line">	age uint8</span><br><span class="line">&#125;</span><br><span class="line">func (o xitehip)run() &#123; // //接收方o是值</span><br><span class="line">&#125;</span><br><span class="line">func (o *xitehip)eat(food string) &#123; //接收方o是指针</span><br><span class="line">&#125;</span><br><span class="line">func main()  &#123;</span><br><span class="line">	var xh Person = &amp;xitehip&#123;age:18&#125; //xh是指针</span><br><span class="line">	xh.eat(&quot;ma la xiao long xia!&quot;)</span><br><span class="line">	xh.run()</span><br><span class="line">&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>这个例子的xh变量的实际类型是个指针，那它是如何调用非指针方法run的呢？</p>
+<p>见下表总结：</p>
+<table>
+<thead>
+<tr>
+<th>调用方</th>
+<th>接收方</th>
+<th>能否编译</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>值</td>
+<td>值</td>
+<td>true</td>
+</tr>
+<tr>
+<td>值</td>
+<td>指针</td>
+<td><em>false</em></td>
+</tr>
+<tr>
+<td>指针</td>
+<td>值</td>
+<td>true</td>
+</tr>
+<tr>
+<td>指针</td>
+<td>指针</td>
+<td>true</td>
+</tr>
+<tr>
+<td>指针</td>
+<td>指针和值</td>
+<td>true</td>
+</tr>
+<tr>
+<td>值</td>
+<td>指针和值</td>
+<td><em>false</em></td>
+</tr>
+</tbody></table>
+<p>从上表可以得出如下结论：</p>
+<blockquote>
+<p>  调用方是值时，只要接收方有指针方法那编译器不允许通过编译。</p>
+</blockquote>
+<h1 id="2-eface"><a href="#2-eface" class="headerlink" title="2 eface"></a>2 eface</h1><p>空接口相对于非空接口没有了方法列表。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">type eface struct &#123;</span><br><span class="line">	_type *_type</span><br><span class="line">	data  unsafe.Pointer</span><br><span class="line">&#125;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+
+<p>第一个属性由itab换成了_type,这个结构体是golang中的变量类型的基础，所以空接口可以指定任意变量类型。</p>
+<h3 id="2-1-示例："><a href="#2-1-示例：" class="headerlink" title="2.1 示例："></a>2.1 示例：</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import &quot;fmt&quot;</span><br><span class="line"></span><br><span class="line">type xitehip struct &#123;</span><br><span class="line">&#125;</span><br><span class="line">func main()  &#123;</span><br><span class="line">	var a interface&#123;&#125; = xitehip&#123;&#125;</span><br><span class="line">	var b interface&#123;&#125; = &amp;xitehip&#123;&#125;</span><br><span class="line">	fmt.Println(a)</span><br><span class="line">	fmt.Println(b)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/21/blog/go-map%E5%88%9D%E5%A7%8B%E5%8C%96/" rel="prev" title="golang map初始化及使用">
+      <i class="fa fa-chevron-left"></i> golang map初始化及使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/01/21/blog/nginx-lua/" rel="next" title="nginx_lua 阶段">
+      nginx_lua 阶段 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-iface"><span class="nav-number">1.</span> <span class="nav-text">1.iface</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E6%98%AF%E5%A6%82%E4%BD%95%E8%BD%AC%E6%8D%A2%E6%88%90%E6%8E%A5%E5%8F%A3%E7%B1%BB%E5%9E%8B%E7%9A%84%EF%BC%9F"><span class="nav-number">1.0.1.</span> <span class="nav-text">1.1 变量类型是如何转换成接口类型的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E6%8C%87%E9%92%88%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E6%98%AF%E5%A6%82%E4%BD%95%E8%BD%AC%E6%8D%A2%E6%88%90%E6%8E%A5%E5%8F%A3%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%91%A2%EF%BC%9F"><span class="nav-number">1.0.2.</span> <span class="nav-text">1.2 指针变量类型是如何转换成接口类型的呢？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-%E6%8E%A5%E5%8F%A3%E8%B0%83%E7%94%A8%E8%A7%84%E5%88%99"><span class="nav-number">1.0.3.</span> <span class="nav-text">1.4 接口调用规则</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-eface"><span class="nav-number">2.</span> <span class="nav-text">2 eface</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="nav-number">2.0.1.</span> <span class="nav-text">2.1 示例：</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ycchildcoder</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

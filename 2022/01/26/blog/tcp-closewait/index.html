@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="TCP四次挥手我们来看看 TCP 的四次挥手是怎么样的流程：     图五：TCP四次挥手 用中文来描述下这个过程： Client: 服务端大哥，我事情都干完了，准备撤了，这里对应的就是客户端发了一个FIN Server：知道了，但是你等等我，我还要收收尾，这里对应的就是服务端收到 FIN 后回应的 ACK 经过上面两步之后，服务端就会处于 CLOSE_WAIT 状态。过了一段时间 Server">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP CLOSE_WAIT 太多问题">
+<meta property="og:url" content="http://example.com/2022/01/26/blog/tcp-closewait/index.html">
+<meta property="og:site_name" content="ycchildcoder">
+<meta property="og:description" content="TCP四次挥手我们来看看 TCP 的四次挥手是怎么样的流程：     图五：TCP四次挥手 用中文来描述下这个过程： Client: 服务端大哥，我事情都干完了，准备撤了，这里对应的就是客户端发了一个FIN Server：知道了，但是你等等我，我还要收收尾，这里对应的就是服务端收到 FIN 后回应的 ACK 经过上面两步之后，服务端就会处于 CLOSE_WAIT 状态。过了一段时间 Server">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/167928e06180fc5e%7Etplv-t2oaga2asx-watermark.awebp">
+<meta property="article:published_time" content="2022-01-26T07:42:23.000Z">
+<meta property="article:modified_time" content="2022-01-27T07:10:24.121Z">
+<meta property="article:author" content="ycchildcoder">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/167928e06180fc5e%7Etplv-t2oaga2asx-watermark.awebp">
+
+<link rel="canonical" href="http://example.com/2022/01/26/blog/tcp-closewait/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>TCP CLOSE_WAIT 太多问题 | ycchildcoder</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">ycchildcoder</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/26/blog/tcp-closewait/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ycchildcoder">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ycchildcoder">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          TCP CLOSE_WAIT 太多问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-01-26 15:42:23" itemprop="dateCreated datePublished" datetime="2022-01-26T15:42:23+08:00">2022-01-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-01-27 15:10:24" itemprop="dateModified" datetime="2022-01-27T15:10:24+08:00">2022-01-27</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="TCP四次挥手"><a href="#TCP四次挥手" class="headerlink" title="TCP四次挥手"></a>TCP四次挥手</h3><p>我们来看看 <strong>TCP</strong> 的四次挥手是怎么样的流程：</p>
+<img src="https://raw.githubusercontent.com/ycchildcoder/markdown/main/167928e06180fc5e%7Etplv-t2oaga2asx-watermark.awebp" alt="image-20181208175427046" style="zoom: 50%;" />
+
+
+
+<p><strong>图五：TCP四次挥手</strong></p>
+<p>用中文来描述下这个过程：</p>
+<p>Client: <code>服务端大哥，我事情都干完了，准备撤了</code>，这里对应的就是客户端发了一个<strong>FIN</strong></p>
+<p>Server：<code>知道了，但是你等等我，我还要收收尾</code>，这里对应的就是服务端收到 <strong>FIN</strong> 后回应的 <strong>ACK</strong></p>
+<p>经过上面两步之后，服务端就会处于 <strong>CLOSE_WAIT</strong> 状态。过了一段时间 <strong>Server</strong> 收尾完了</p>
+<p>Server：<code>小弟，哥哥我做完了，撤吧</code>，服务端发送了<strong>FIN</strong></p>
+<p>Client：<code>大哥，再见啊</code>，这里是客户端对服务端的一个 <strong>ACK</strong></p>
+<p>到此服务端就可以跑路了，但是客户端还不行。为什么呢？客户端还必须等待 <strong>2MSL</strong> 个时间，这里为什么客户端还不能直接跑路呢？主要是为了防止发送出去的 <strong>ACK</strong> 服务端没有收到，服务端重发 <strong>FIN</strong> 再次来询问，如果客户端发完就跑路了，那么服务端重发的时候就没人理他了。这个等待的时间长度也很讲究。</p>
+<p><u><strong>Maximum Segment Lifetime</strong> 报文最大生存时间，它是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃</u></p>
+<p>这里一定不要被图里的 <strong>client／server</strong> 和项目里的客户端服务器端混淆，你只要记住：主动关闭的一方发出 <strong>FIN</strong> 包（Client），被动关闭（Server）的一方响应 <strong>ACK</strong> 包，此时，被动关闭的一方就进入了 <strong>CLOSE_WAIT</strong> 状态。如果一切正常，稍后被动关闭的一方也会发出 <strong>FIN</strong> 包，然后迁移到 <strong>LAST_ACK</strong> 状态。</p>
+<p>既然是这样， <strong>TCP</strong> 抓包分析下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">/go # tcpdump -n port 3306</span><br><span class="line"># 发生了 3次握手</span><br><span class="line">11:38:15.679863 IP 172.18.0.5.38822 &gt; 172.18.0.3.3306: Flags [S], seq 4065722321, win 29200, options [mss 1460,sackOK,TS val 2997352 ecr 0,nop,wscale 7], length 0</span><br><span class="line">11:38:15.679923 IP 172.18.0.3.3306 &gt; 172.18.0.5.38822: Flags [S.], seq 780487619, ack 4065722322, win 28960, options [mss 1460,sackOK,TS val 2997352 ecr 2997352,nop,wscale 7], length 0</span><br><span class="line">11:38:15.679936 IP 172.18.0.5.38822 &gt; 172.18.0.3.3306: Flags [.], ack 1, win 229, options [nop,nop,TS val 2997352 ecr 2997352], length 0</span><br><span class="line"></span><br><span class="line"># mysql 主动断开链接</span><br><span class="line">11:38:45.693382 IP 172.18.0.3.3306 &gt; 172.18.0.5.38822: Flags [F.], seq 123, ack 144, win 227, options [nop,nop,TS val 3000355 ecr 2997359], length 0 # MySQL负载均衡器发送fin包给我</span><br><span class="line">11:38:45.740958 IP 172.18.0.5.38822 &gt; 172.18.0.3.3306: Flags [.], ack 124, win 229, options [nop,nop,TS val 3000360 ecr 3000355], length 0 # 我回复ack给它</span><br><span class="line"></span><br><span class="line">... ... # 本来还需要我发送fin给他，但是我没有发，所以出现了close_wait。那这是什么缘故呢？</span><br></pre></td></tr></table></figure>
+
+<p>结合上面的信息，我用文字说明下：<strong>MySQL负载均衡器</strong> 给我的服务发送 <strong>FIN</strong> 包，我进行了响应，此时我进入了 <strong>CLOSE_WAIT</strong> 状态，但是后续作为被动关闭方的我，并没有发送 <strong>FIN</strong>，导致我服务端一直处于 <strong>CLOSE_WAIT</strong> 状态，无法最终进入 <strong>CLOSED</strong> 状态。</p>
+<ul>
+<li>  <strong>大量<code>CLOSE_WAIT</code>有什么危害?</strong> <code>CLOSE_WAIT</code>状态不会自己消失,除非对应的应用进程死掉,不会消失就意味着一直占用服务器资源,端口总数又只有65535,因此这里的服务器作为连接的发起者就会造成大量端口被占用,一旦占用完就导致后面的请求都发不出去,也就是一开始图上另一个项目发请求出现的<code>Address already in use (Bind failed)</code>错误.</li>
+<li>被动方什么情况下<code>FIN</code>包会发送失败?<ul>
+<li>  <strong>程序问题</strong>：如果代码层面忘记了 close 相应的 socket 连接，那么自然不会发出 FIN 包，从而导致 CLOSE_WAIT 累积；或者代码不严谨，出现死循环之类的问题，导致即便后面写了 close 也永远执行不到。</li>
+<li>  <strong>响应太慢或者超时设置过小</strong>：如果连接双方不和谐，一方不耐烦直接 timeout，另一方却还在忙于耗时逻辑，就会导致 close 被延后。响应太慢是首要问题，不过换个角度看，也可能是 timeout 设置过小。</li>
+<li>  BACKLOG 太大：此处的 backlog 不是 syn backlog，而是 accept 的 backlog，如果 backlog 太大的话，设想突然遭遇大访问量的话，即便响应速度不慢，也可能出现来不及消费的情况，导致多余的请求还在队列里就被对方关闭了。</li>
+</ul>
+</li>
+</ul>
+<p>如果你通过「netstat -ant」或者「ss -ant」命令发现了很多 CLOSE_WAIT 连接，请注意结果中的「Recv-Q」和「Local Address」字段，通常「Recv-Q」会不为空，它表示应用还没来得及接收数据，而「Local Address」表示哪个地址和端口有问题，我们可以通过「lsof -i:<PORT>」来确认端口对应运行的是什么程序以及它的进程号是多少。</p>
+<p>如果是我们自己写的一些程序，比如用 HttpClient 自定义的蜘蛛，那么八九不离十是程序问题，如果是一些使用广泛的程序，比如 Tomcat 之类的，那么更可能是响应速度太慢或者 timeout 设置太小或者 BACKLOG 设置过大导致的故障。</p>
+<p>此外还有一点需要说明：按照前面图例所示，当被动关闭的一方处于 CLOSE_WAIT 状态时，主动关闭的一方处于 FIN_WAIT2 状态。 那么为什么我们总听说 CLOSE_WAIT 状态过多的故障，但是却相对少听说 FIN_WAIT2 状态过多的故障呢？这是因为 Linux 有一个「tcp_fin_timeout」设置，控制了 FIN_WAIT2 的最大生命周期。坏消息是 CLOSE_WAIT 没有类似的设置，如果不重启进程，那么 CLOSE_WAIT 状态很可能会永远持续下去；好消息是如果 socket 开启了 <a target="_blank" rel="noopener" href="http://www.tldp.org/HOWTO/html_single/TCP-Keepalive-HOWTO/">keepalive</a> 机制，那么可以通过相应的设置来清理无效连接，不过 keepalive 是治标不治本的方法，还是应该找到问题的症结才对。</p>
+<p>本来想多写点的，但是着急回家，就写到这吧，推荐两个案例：</p>
+<ul>
+<li>  <a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MjM5NzUwNDA5MA==&mid=200667929&idx=1&sn=67cada895ac100115fded319b6b23a21&3rd=MzA3MDU4NTYzMw==&scene=6#rd">PHP升级导致系统负载过高问题分析</a></li>
+<li>  <a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzI4MjA4ODU0Ng==&mid=402163560&idx=1&sn=5269044286ce1d142cca1b5fed3efab1&3rd=MzA3MDU4NTYzMw==&scene=6#rd">又见CLOSE_WAIT</a></li>
+</ul>
+<p>写得都比我好，建议大家仔细阅读。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/25/blog/go-ldflags/" rel="prev" title="golang ldflags">
+      <i class="fa fa-chevron-left"></i> golang ldflags
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/01/26/blog/linux%E6%80%A7%E8%83%BD%E5%B7%A5%E5%85%B7/" rel="next" title="linux性能工具">
+      linux性能工具 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B"><span class="nav-number">1.</span> <span class="nav-text">TCP四次挥手</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ycchildcoder</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
