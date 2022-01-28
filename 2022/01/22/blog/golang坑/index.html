@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -26,7 +26,7 @@
 <meta property="og:url" content="http://example.com/2022/01/22/blog/golang%E5%9D%91/index.html">
 <meta property="og:site_name" content="ycchildcoder">
 <meta property="og:description" content="Golang是一门语言，它简洁、高效、易学习、开发效率高、还可以编译成机器码…它毕竟是一门新兴语言，一边学习，一边踩坑。 多个defer出现的时候，多个defer之间按照LIFO（后进先出）的顺序执行12345678910111213141516171819package mainimport &quot;fmt&quot;func main()&amp;#123;    defer func()&amp;#12">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-01-22T07:44:43.000Z">
 <meta property="article:modified_time" content="2022-01-24T02:35:43.669Z">
 <meta property="article:author" content="ycchildcoder">
@@ -41,7 +41,7 @@
     sidebar: "",
     isHome : false,
     isPost : true,
-    lang   : 'en'
+    lang   : 'zh-CN'
   };
 </script>
 
@@ -85,7 +85,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -114,12 +114,12 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
   </ul>
@@ -149,13 +149,13 @@
     
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/22/blog/golang%E5%9D%91/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="ycchildcoder">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content="Welcome">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -171,16 +171,16 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2022-01-22 15:44:43" itemprop="dateCreated datePublished" datetime="2022-01-22T15:44:43+08:00">2022-01-22</time>
+              <time title="创建时间：2022-01-22 15:44:43" itemprop="dateCreated datePublished" datetime="2022-01-22T15:44:43+08:00">2022-01-22</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-01-24 10:35:43" itemprop="dateModified" datetime="2022-01-24T10:35:43+08:00">2022-01-24</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-01-24 10:35:43" itemprop="dateModified" datetime="2022-01-24T10:35:43+08:00">2022-01-24</time>
               </span>
 
           
@@ -549,8 +549,8 @@
       <i class="fa fa-chevron-left"></i> nginx_location
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/01/22/blog/go-stack/" rel="next" title="golang栈stack">
-      golang栈stack <i class="fa fa-chevron-right"></i>
+    <a href="/2022/01/22/blog/go%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90/" rel="next" title="go逃逸分析">
+      go逃逸分析 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -601,10 +601,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -617,7 +617,7 @@
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">ycchildcoder</p>
-  <div class="site-description" itemprop="description"></div>
+  <div class="site-description" itemprop="description">Welcome</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -625,7 +625,7 @@
           <a href="/archives/">
         
           <span class="site-state-item-count">23</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
   </nav>
@@ -658,7 +658,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
 
         

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -26,7 +26,7 @@
 <meta property="og:url" content="http://example.com/2022/01/24/blog/go-slice/index.html">
 <meta property="og:site_name" content="ycchildcoder">
 <meta property="og:description" content="Go语言的array和slice不同点，今天我们就从底层触发。 数组几乎所有计算机语言，数组的实现都是相似的：一段连续的内存，Go语言也一样，Go语言的数组底层实现就是一段连续的内存空间。每个元素有唯一一个索引(或者叫下标)来访问。 数组是具有相同唯一类型的一组已编号且长度固定的数据项序列，这种类型可以是任意的原始类型例如整型、字符串或者自定义类型。 如下图所示，数组的内部实现逻辑图:  由于内存">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/goarray.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/slice_1011.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/ycchildcoder/markdown/main/slice200.png">
@@ -48,7 +48,7 @@
     sidebar: "",
     isHome : false,
     isPost : true,
-    lang   : 'en'
+    lang   : 'zh-CN'
   };
 </script>
 
@@ -92,7 +92,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -121,12 +121,12 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
   </ul>
@@ -156,13 +156,13 @@
     
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/01/24/blog/go-slice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="ycchildcoder">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content="Welcome">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -178,10 +178,10 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="Created: 2022-01-24 15:50:31 / Modified: 16:29:14" itemprop="dateCreated datePublished" datetime="2022-01-24T15:50:31+08:00">2022-01-24</time>
+              <time title="创建时间：2022-01-24 15:50:31 / 修改时间：16:29:14" itemprop="dateCreated datePublished" datetime="2022-01-24T15:50:31+08:00">2022-01-24</time>
             </span>
 
           
@@ -296,10 +296,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -312,7 +312,7 @@
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">ycchildcoder</p>
-  <div class="site-description" itemprop="description"></div>
+  <div class="site-description" itemprop="description">Welcome</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -320,7 +320,7 @@
           <a href="/archives/">
         
           <span class="site-state-item-count">23</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
   </nav>
@@ -353,7 +353,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">ycchildcoder</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
 
         
